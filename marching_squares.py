@@ -1,12 +1,13 @@
 import numpy as np
 from cells import CELL_TYPES
 
+
 class UnitCell:
 
     def __init__(self, type):
         
-        self.nodes = CELL_TYPES[type]['beams']
-        self.beams = CELL_TYPES[type]['nodes']
+        self.nodes = CELL_TYPES[type]['nodes']
+        self.beams = CELL_TYPES[type]['beams']
         self.x_scale = 10
         self.y_scale = 10
 
