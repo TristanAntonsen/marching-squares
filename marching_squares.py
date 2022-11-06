@@ -2,6 +2,23 @@ import numpy as np
 from cells import CELL_TYPES
 
 
+class Grid:
+
+    def __init__(self, scale, x_count, y_count):
+        self.x_count = x_count
+        self.y_count = y_count
+        self.scale = scale
+        
+        self.create_points()
+
+    def create_points(self):
+        points = []
+        for x in range(self.x_count):
+            for y in range(self.y_count):
+                points.append([x * self.scale,y * self.scale])
+        
+        self.points = np.array(points)
+
 class UnitCell:
 
     def __init__(self, type):
