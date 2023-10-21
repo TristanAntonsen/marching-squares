@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 from tables import STATES
 
@@ -105,7 +105,7 @@ def march(grid: Grid, iso, interpolated=True):
                 edge_points = [_a,_b,_c,_d]
 
             state = get_state(v0, v1, v2, v3, iso)
-            # print(v0, v1, v2, v3)
+
             edges = STATES[state]
             
             for line in edges:
@@ -114,21 +114,27 @@ def march(grid: Grid, iso, interpolated=True):
                 graph.append((p1, p2))
     return graph
 
-def values_from_image(grid, img):
-    w, h = img.size
+def values_from_image(grid, img, blur=0):
+    if blur > 0:
+        image = img.filter(ImageFilter.BoxBlur(blur))
+    else:
+        image = img
+
+    w, h = image.size
     for i in range(grid.x_count):
         for j in range(grid.y_count):
 
             scale = grid.scale
             x = min(i * scale, w - 1)
             y = min(j * scale, h - 1)
-            v = np.mean(np.array(img.getpixel((x, y))))
+            v = np.mean(np.array(image.getpixel((x, y))))
             grid.values[j, i] = v
 
 def main():
 
     image_resolution = 1080
     img = Image.open('test1080.png').resize((image_resolution, image_resolution))
+    # img = img.filter(ImageFilter.BoxBlur(50))
     # img = Image.new('RGB', (image_resolution, image_resolution))
     draw = ImageDraw.Draw(img)
 
@@ -154,28 +160,29 @@ def main():
                 center_ellipse(x, y, 5, f'rgb({v},{v},{v})')
 
     interpolated = True
-    iso = -100
+    iso = 100
     grid_divisions = 50
 
     grid_scale = image_resolution / (grid_divisions - 1)
 
     grid = Grid(grid_scale, grid_divisions, grid_divisions)
-    # set the values
-    map_grid(grid)
-    # grid.values = np.asarray(img)[:, :, 2]
 
-    # values_from_image(grid, img)
+    # set the values
+    # map_grid(grid)
+
+    values_from_image(grid, img, blur=10)
     ## Drawing shapes 
     # Background
-    center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
+    # center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
     ## Circle (for map(p))
-    center_ellipse(image_resolution / 2, image_resolution / 2, RADIUS, f'rgb({68},{204},{255})')
+    # center_ellipse(image_resolution / 2, image_resolution / 2, RADIUS, f'rgb({68},{204},{255})')
 
     # draw_dots(grid)
 
     def draw_edges(grid, img_path):
 
         edges = march(grid, iso, interpolated)
+
         for line in edges:
             p1 = line[0]
             p2 = line[1]
