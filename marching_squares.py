@@ -68,8 +68,8 @@ def march(grid: Grid, iso, interpolated=True):
 
     graph = []
 
-    for i in range(grid.x_count):
-        for j in range(grid.y_count):
+    for i in range(grid.y_count):
+        for j in range(grid.x_count):
             scale = grid.scale
 
             x = i * scale
@@ -147,52 +147,50 @@ def values_from_image(grid, img, **kwargs):
 
 def main():
 
-    image_resolution = 1080
-    img = Image.open('test1080RGB.png').resize((image_resolution, image_resolution))
+    x_res = 1080
+    y_res = 1080
+    # img = Image.open('test1080RGB.png').resize((image_resolution, image_resolution))
     # img = img.filter(ImageFilter.BoxBlur(50))
-    # img = Image.new('RGB', (image_resolution, image_resolution))
+    img = Image.new('RGB', (x_res, y_res))
     draw = ImageDraw.Draw(img)
 
     def center_ellipse(x,y,r,c):
 
         draw.ellipse([x - r, y - r, x + r, y + r], fill=c)
 
-    def center_rectangle(x,y,l,w,c):
-        l = l/2
-        w = w/2
-        draw.rectangle([x - w, y - l, x + w, y + l], fill=c)
-
-
     def draw_dots(grid):
 
-        for i in range(grid.x_count):
-            for j in range(grid.y_count):
+        for i in range(grid.y_count):
+            for j in range(grid.x_count):
                 scale = grid.scale
 
-                x = i * scale
-                y = j * scale
+                x = j * scale
+                y = i * scale
                 v = round(grid.values[i, j])
-                center_ellipse(x, y, 5, f'rgb({v},{v},{v})')
-
+                if v < 0:
+                    c = max(0, -v)
+                    center_ellipse(x, y, 5, f'rgb({0},{c},{c})')
+                else:
+                    c = max(0, v)
+                    center_ellipse(x, y, 5, f'rgb({c},{c},{c})')
+                    
     interpolated = True
-    iso = 10
-    grid_divisions = 50
+    iso = 0
+    divisions = 75
+    grid_scale = round(x_res / divisions) # pixels
 
-    grid_scale = image_resolution / (grid_divisions - 1)
-
-    grid = Grid(grid_scale, grid_divisions, grid_divisions)
+    x_divs = int(np.floor(x_res / grid_scale)) + 1
+    y_divs = int(np.floor(y_res / grid_scale)) + 1
+    print(x_divs)
+    print(y_divs)
+    grid = Grid(grid_scale, x_divs, y_divs)
 
     # set the values
-    # map_grid(grid)
+    map_grid(grid)
 
-    values_from_image(grid, img, channel="G", blur=0)
-    ## Drawing shapes 
-    # Background
-    # center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
-    ## Circle (for map(p))
-    # center_ellipse(image_resolution / 2, image_resolution / 2, RADIUS, f'rgb({68},{204},{255})')
+    # values_from_image(grid, img, channel="G", blur=0)
 
-    # draw_dots(grid)
+    draw_dots(grid)
 
     def draw_edges(grid, img_path):
 
@@ -206,6 +204,7 @@ def main():
             x2 = p2[1]
             y2 = p2[0]
             draw.line([x1, y1, x2, y2], fill=f'rgb({0},{255},{255})',width=4)
+
         img.save(img_path)
 
     draw_edges(grid, "marched.png")
