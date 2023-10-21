@@ -1,8 +1,12 @@
 # marching-squares
 
-An implementation of Marching Squares. Marching Squares is an algorithm that extracts edges from a function/field or 2D grid of values. This algorithm is useful whenever edge or boundary data is needed (toolpaths, for example).
+An implementation of Marching Squares. Marching Squares is an algorithm that extracts edges from a function/field or 2D grid of values. This algorithm is useful whenever edge or boundary data is needed (toolpaths, for example). 
 
-The basic steps are as follows.
+Marching Squares is a 2D version of "Marching Cubes", which is common in extracting surfaces as triangle meshes from 3D functions or fields and discrete 3D data such as MRI and CT scans.
+
+---
+
+### Basic Steps
 
 For each square in a 2D grid:
 1. Sample the data/field at each corner point
@@ -12,11 +16,14 @@ For each square in a 2D grid:
     
 <img src="sample-images/banner.png">
 
+
+
+Since the number of binary combinations of the four corners is finite (16), a lookup table can be used to construct these edges very quickly.
+
 The size of the sampling grid determines the "resolution" and thus the maximum deviation from the "actual" boundary the resulting edges will have.
 
-Marching Squares is a 2D version of "Marching Cubes", which is common in extracting surfaces as triangle meshes from 3D functions and discrete 3D data such as MRI and CT scans.
-
 ---
+### Examples
 
 *Extracting the edges of an implicit circle defined by a signed distance function. The dot colors represent the values at each sampling location and the cyan lines are the extracted boundary.*
 
@@ -37,7 +44,7 @@ Here is an example of different grid/marching square sizes:
 
 <img src="sample-images/marched_no_interp.png">
 
-*Discrete data, such as with an image, can be used as well. This example extracts the boundary of green regions. The image was first box blurred prior to sampling to allow interpolation to smooth the boundary.*
+*Discrete input data, such as with an image, can be used as well. This example extracts the boundary of green regions. The image was first box blurred prior to sampling to allow interpolation to smooth the boundary.*
 
 <img src="sample-images/marched_img_red.png">
 
