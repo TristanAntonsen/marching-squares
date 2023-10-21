@@ -48,7 +48,8 @@ def lerp_points(p0, p1, t):
     ]
 
 def find_lerp_factor(v0, v1, iso_val):
-    return (iso_val - v0) / (v1 - v0)
+    t = (iso_val - v0) / (v1 - v0)
+    return max(min(1, t), 0)
 
 def map(x, y):
     d = circle(x, y, 540, 540, 400)
@@ -109,13 +110,24 @@ def march(grid: Grid, iso, interpolated=True):
                 p1 = edge_points[line[0]]
                 p2 = edge_points[line[1]]
                 graph.append((p1, p2))
-
     return graph
+
+def values_from_image(grid, img):
+    w, h = img.size
+    for i in range(grid.x_count):
+        for j in range(grid.y_count):
+
+            scale = grid.scale
+            x = min(i * scale, w - 1)
+            y = min(j * scale, h - 1)
+            v = np.mean(np.array(img.getpixel((x, y))))
+            grid.values[j, i] = v
 
 def main():
 
     image_resolution = 1080
-    img = Image.new('RGB', (image_resolution, image_resolution))
+    img = Image.open('test1080.png').resize((image_resolution, image_resolution))
+    # img = Image.new('RGB', (image_resolution, image_resolution))
     draw = ImageDraw.Draw(img)
 
     def center_ellipse(x,y,r,c):
@@ -127,9 +139,21 @@ def main():
         w = w/2
         draw.rectangle([x - w, y - l, x + w, y + l], fill=c)
 
+
+    def draw_dots(grid):
+
+        for i in range(grid.x_count):
+            for j in range(grid.y_count):
+                scale = grid.scale
+
+                x = i * scale
+                y = j * scale
+                v = round(grid.values[i, j])
+                center_ellipse(x, y, 5, f'rgb({v},{v},{v})')
+
     radius = 400
-    interpolated = True
-    iso = 0
+    interpolated = False
+    iso = 100
     grid_divisions = 50
 
     grid_scale = image_resolution / (grid_divisions - 1)
@@ -137,12 +161,16 @@ def main():
     grid = Grid(grid_scale, grid_divisions, grid_divisions)
     # set the values
     map_grid(grid)
+    # grid.values = np.asarray(img)[:, :, 2]
 
+    values_from_image(grid, img)
     ## Drawing shapes 
     # Background
-    center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
+    # center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
     ## Circle (for map(p))
-    center_ellipse(image_resolution / 2, image_resolution / 2, radius, f'rgb({68},{204},{255})')
+    # center_ellipse(image_resolution / 2, image_resolution / 2, radius, f'rgb({68},{204},{255})')
+
+    # draw_dots(grid)
 
     def draw_edges(grid, img_path):
 
@@ -150,11 +178,15 @@ def main():
         for line in edges:
             p1 = line[0]
             p2 = line[1]
-            draw.line([p1[0], p1[1], p2[0], p2[1]], fill=f'rgb({255},{255},{255})',width=4)
-        
+            x1 = p1[1] # reversed x & y for consistency
+            y1 = p1[0]
+            x2 = p2[1]
+            y2 = p2[0]
+            draw.line([x1, y1, x2, y2], fill=f'rgb({255},{0},{0})',width=4)
         img.save(img_path)
 
     draw_edges(grid, "marched.png")
 
 if __name__ == "__main__":
     main()
+    # test_image()
