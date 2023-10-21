@@ -114,26 +114,41 @@ def march(grid: Grid, iso, interpolated=True):
                 graph.append((p1, p2))
     return graph
 
-def values_from_image(grid, img, blur=0):
+def values_from_image(grid, img, **kwargs):
+    blur = kwargs.get("blur", 0)
+    channel = kwargs.get("channel", "all").lower()
+
     if blur > 0:
         image = img.filter(ImageFilter.BoxBlur(blur))
     else:
         image = img
 
     w, h = image.size
+
     for i in range(grid.x_count):
         for j in range(grid.y_count):
 
             scale = grid.scale
             x = min(i * scale, w - 1)
             y = min(j * scale, h - 1)
-            v = np.mean(np.array(image.getpixel((x, y))))
+            pixel = image.getpixel((x, y))
+            brightness = np.mean(np.array(pixel))
+            
+            if channel == "r":
+                v = pixel[0] - brightness
+            elif channel == "g":
+                v = pixel[1] - brightness
+            elif channel == "b":
+                v = pixel[2] - brightness
+            else:
+                v = brightness
+            
             grid.values[j, i] = v
 
 def main():
 
     image_resolution = 1080
-    img = Image.open('test1080.png').resize((image_resolution, image_resolution))
+    img = Image.open('test1080RGB.png').resize((image_resolution, image_resolution))
     # img = img.filter(ImageFilter.BoxBlur(50))
     # img = Image.new('RGB', (image_resolution, image_resolution))
     draw = ImageDraw.Draw(img)
@@ -160,7 +175,7 @@ def main():
                 center_ellipse(x, y, 5, f'rgb({v},{v},{v})')
 
     interpolated = True
-    iso = 100
+    iso = 10
     grid_divisions = 50
 
     grid_scale = image_resolution / (grid_divisions - 1)
@@ -170,7 +185,7 @@ def main():
     # set the values
     # map_grid(grid)
 
-    values_from_image(grid, img, blur=10)
+    values_from_image(grid, img, channel="G", blur=0)
     ## Drawing shapes 
     # Background
     # center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
@@ -190,7 +205,7 @@ def main():
             y1 = p1[0]
             x2 = p2[1]
             y2 = p2[0]
-            draw.line([x1, y1, x2, y2], fill=f'rgb({255},{0},{0})',width=4)
+            draw.line([x1, y1, x2, y2], fill=f'rgb({0},{255},{255})',width=4)
         img.save(img_path)
 
     draw_edges(grid, "marched.png")
