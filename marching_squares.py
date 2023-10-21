@@ -6,6 +6,7 @@ from tables import STATES
 # ignore divide by zero errors
 np.seterr(divide='ignore', invalid='ignore')
 
+RADIUS = 450 # for circle testing
 
 class Grid:
 
@@ -15,19 +16,19 @@ class Grid:
         self.scale = scale
         self.values = np.zeros((x_count + 1) * (y_count + 1)).reshape(y_count + 1, x_count + 1)
 
-def get_state(a,b,c,d,threshold):
+def get_state(a,b,c,d,iso):
     
     # Either 0 or 1
-    # < threshold = 0
-    # > threshold = 1
+    # < iso = 0
+    # > iso = 1
 
-    a = threshold + a > threshold
-    b = threshold + b > threshold
-    c = threshold + c > threshold
-    d = threshold + d > threshold
+    sa = (a - iso) > 0
+    sb = (b - iso) > 0
+    sc = (c - iso) > 0
+    sd = (d - iso) > 0
 
     # Index for lookup table
-    s = round(a * 8 + b * 4 + c * 2 + d * 1)
+    s = round(sa * 8 + sb * 4 + sc * 2 + sd * 1)
 
     return s
 
@@ -52,7 +53,7 @@ def find_lerp_factor(v0, v1, iso_val):
     return max(min(1, t), 0)
 
 def map(x, y):
-    d = circle(x, y, 540, 540, 400)
+    d = circle(x, y, 540, 540, RADIUS)
     return d
 
 def map_grid(grid: Grid):
@@ -61,7 +62,7 @@ def map_grid(grid: Grid):
         for j in range(grid.y_count + 1):
             x = i * grid.scale
             y = j * grid.scale
-            grid.values[j, i] = circle(x, y, 540, 540, 400)
+            grid.values[j, i] = map(x, y)
 
 def march(grid: Grid, iso, interpolated=True):
 
@@ -103,7 +104,8 @@ def march(grid: Grid, iso, interpolated=True):
             if interpolated == False:
                 edge_points = [_a,_b,_c,_d]
 
-            state = get_state(v0, v1, v2, v3, 0)
+            state = get_state(v0, v1, v2, v3, iso)
+            # print(v0, v1, v2, v3)
             edges = STATES[state]
             
             for line in edges:
@@ -151,9 +153,8 @@ def main():
                 v = round(grid.values[i, j])
                 center_ellipse(x, y, 5, f'rgb({v},{v},{v})')
 
-    radius = 400
-    interpolated = False
-    iso = 100
+    interpolated = True
+    iso = -100
     grid_divisions = 50
 
     grid_scale = image_resolution / (grid_divisions - 1)
@@ -163,12 +164,12 @@ def main():
     map_grid(grid)
     # grid.values = np.asarray(img)[:, :, 2]
 
-    values_from_image(grid, img)
+    # values_from_image(grid, img)
     ## Drawing shapes 
     # Background
-    # center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
+    center_rectangle(image_resolution / 2, image_resolution / 2, image_resolution, image_resolution, f'rgb({73},{73},{71})')
     ## Circle (for map(p))
-    # center_ellipse(image_resolution / 2, image_resolution / 2, radius, f'rgb({68},{204},{255})')
+    center_ellipse(image_resolution / 2, image_resolution / 2, RADIUS, f'rgb({68},{204},{255})')
 
     # draw_dots(grid)
 
@@ -189,4 +190,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # test_image()
