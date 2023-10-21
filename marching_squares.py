@@ -16,6 +16,15 @@ class Grid:
         self.scale = scale
         self.values = np.zeros((x_count + 1) * (y_count + 1)).reshape(y_count + 1, x_count + 1)
 
+    def set(self, x, y, v):
+
+        self.values[y, x] = v
+
+    def get(self, x, y):
+
+        return self.values[y, x]
+
+
 def get_state(a,b,c,d,iso):
     
     # Either 0 or 1
@@ -62,7 +71,7 @@ def map_grid(grid: Grid):
         for j in range(grid.y_count + 1):
             x = i * grid.scale
             y = j * grid.scale
-            grid.values[j, i] = map(x, y)
+            grid.set(i, j, map(x, y))
 
 def march(grid: Grid, iso, interpolated=True):
 
@@ -76,10 +85,11 @@ def march(grid: Grid, iso, interpolated=True):
             y = j * scale
 
             ## values at (corner) points
-            v0 = grid.values[i    , j    ]
-            v1 = grid.values[i + 1, j    ]
-            v2 = grid.values[i + 1, j + 1]
-            v3 = grid.values[i    , j + 1]
+
+            v0 = grid.get(j    , i    )
+            v1 = grid.get(j    , i + 1)
+            v2 = grid.get(j + 1, i + 1)
+            v3 = grid.get(j + 1, i    )
 
             ## Interopolation factors
             ta = find_lerp_factor(v0, v1, iso)
@@ -129,8 +139,8 @@ def values_from_image(grid, img, **kwargs):
         for j in range(grid.y_count):
 
             scale = grid.scale
-            x = min(i * scale, w - 1)
-            y = min(j * scale, h - 1)
+            x = min(j * scale, w - 1)
+            y = min(i * scale, h - 1)
             pixel = image.getpixel((x, y))
             brightness = np.mean(np.array(pixel))
             
@@ -143,15 +153,25 @@ def values_from_image(grid, img, **kwargs):
             else:
                 v = brightness
             
-            grid.values[j, i] = v
+            grid.set(j, i, v)
 
 def main():
 
+    # Main parameters
+    interpolated = True
+    iso = 10
+    divisions = 75
+
+    # Create a blank image
     x_res = 1080
     y_res = 1080
-    # img = Image.open('test1080RGB.png').resize((image_resolution, image_resolution))
-    # img = img.filter(ImageFilter.BoxBlur(50))
-    img = Image.new('RGB', (x_res, y_res))
+    img = Image.new('RGB', (x_res, y_res)) 
+
+    # Or read an image
+    # img = Image.open('test1080RGB.png')
+    # x_res, y_res = img.size
+    
+    
     draw = ImageDraw.Draw(img)
 
     def center_ellipse(x,y,r,c):
@@ -160,13 +180,13 @@ def main():
 
     def draw_dots(grid):
 
-        for i in range(grid.y_count):
-            for j in range(grid.x_count):
+        for j in range(grid.y_count):
+            for i in range(grid.x_count):
                 scale = grid.scale
 
-                x = j * scale
-                y = i * scale
-                v = round(grid.values[i, j])
+                x = i * scale
+                y = j * scale
+                v = round(grid.get(i, j))
                 if v < 0:
                     c = max(0, -v)
                     center_ellipse(x, y, 5, f'rgb({0},{c},{c})')
@@ -174,21 +194,16 @@ def main():
                     c = max(0, v)
                     center_ellipse(x, y, 5, f'rgb({c},{c},{c})')
                     
-    interpolated = True
-    iso = 0
-    divisions = 75
-    grid_scale = round(x_res / divisions) # pixels
 
+    grid_scale = round(x_res / divisions) # pixels
     x_divs = int(np.floor(x_res / grid_scale)) + 1
     y_divs = int(np.floor(y_res / grid_scale)) + 1
-    print(x_divs)
-    print(y_divs)
+
     grid = Grid(grid_scale, x_divs, y_divs)
 
     # set the values
-    map_grid(grid)
-
-    # values_from_image(grid, img, channel="G", blur=0)
+    map_grid(grid)                                    # populate with a function
+    # values_from_image(grid, img, channel="all", blur=10) # or read from an image
 
     draw_dots(grid)
 
