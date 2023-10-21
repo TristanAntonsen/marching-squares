@@ -66,8 +66,6 @@ def march(grid: Grid, iso, interpolated=True):
 
     graph = []
 
-    map_grid(grid)
-
     for i in range(grid.x_count):
         for j in range(grid.y_count):
             scale = grid.scale
@@ -137,6 +135,8 @@ def main():
     grid_scale = image_resolution / (grid_divisions - 1)
 
     grid = Grid(grid_scale, grid_divisions, grid_divisions)
+    # set the values
+    map_grid(grid)
 
     ## Drawing shapes 
     # Background
