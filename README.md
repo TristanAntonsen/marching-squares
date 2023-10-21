@@ -2,13 +2,19 @@
 
 An implementation of Marching Squares. Marching Squares is an algorithm that extracts edges from a function/field or 2D grid of values. This algorithm is useful whenever edge or boundary data is needed (toolpaths, for example).
 
-<img src="sample-images/banner.png">
+The basic steps are as follows.
 
+For each square in a 2D grid:
+1. Sample the data/field at each corner point
+2. Construct a lookup ID/state from these four values and a threshold (typically 0)
+3. Use this ID to look up the connections between edge midpoints to make based on a static edge table
+4. Insert the edges from the table into a list and move to the next square
+    
+<img src="sample-images/banner.png">
 
 The size of the sampling grid determines the "resolution" and thus the maximum deviation from the "actual" boundary the resulting edges will have.
 
 Marching Squares is a 2D version of "Marching Cubes", which is common in extracting surfaces as triangle meshes from 3D functions and discrete 3D data such as MRI and CT scans.
-
 
 ---
 
